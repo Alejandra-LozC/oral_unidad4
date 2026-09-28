@@ -606,9 +606,6 @@ with col_checklist:
 
         respuestas.append(respuesta)
 
-
-st.markdown("---")
-
 # ============================================================
 # INDICACIONES Y CRITERIO DE EVALUACIÓN
 # ============================================================
@@ -627,28 +624,7 @@ with st.expander("Consultar indicaciones para la grabación"):
     Se evaluará tu capacidad para explicar, relacionar y localizar las estructuras anatómicas utilizando terminología correcta, no la lectura de información preparada.
 
     La imagen anatómica permanecerá disponible como referencia durante la grabación.
-
-    ---
-
-    ### Criterio de evaluación: explicación oral y dominio anatómico
-
-    **Nivel 4 — Sobresaliente**
-
-    Explica con sus propias palabras, con secuencia lógica, precisión anatómica y terminología adecuada. Utiliza apoyos únicamente como guía.
-
-    **Nivel 3 — Competente**
-
-    Explica de manera comprensible y mayormente correcta. Presenta algunas pausas o depende ocasionalmente de sus apoyos.
-
-    **Nivel 2 — En desarrollo**
-
-    La explicación es fragmentada, con dependencia frecuente de las notas o dificultades para establecer relaciones anatómicas.
-
-    **Nivel 1 — Insuficiente**
-
-    Lee una respuesta o no logra desarrollar una explicación anatómica coherente, incluso con apoyo.
     """)
-
 
 # ============================================================
 # GRABACIÓN
