@@ -28,7 +28,62 @@ ARCHIVO_ASIGNACIONES = Path("data/asignaciones_unidad4.csv")
 
 
 # ============================================================
-# ESTRUCTURAS
+# ESTILOS
+# ============================================================
+
+st.markdown("""
+<style>
+
+/* Permitir que las opciones del checklist ocupen varias líneas */
+[data-testid="stCheckbox"] {
+    width: 100% !important;
+    overflow: visible !important;
+}
+
+[data-testid="stCheckbox"] label {
+    width: 100% !important;
+    align-items: flex-start !important;
+    overflow: visible !important;
+}
+
+[data-testid="stCheckbox"] label p {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Evitar truncamiento dentro del contenedor de texto */
+[data-testid="stCheckbox"] [data-testid="stMarkdownContainer"] {
+    width: 100% !important;
+    overflow: visible !important;
+}
+
+/* Mejorar separación de los criterios */
+[data-testid="stCheckbox"] {
+    margin-bottom: 0.55rem;
+}
+
+/* Caja de indicaciones */
+.instrucciones-orales {
+    background-color: rgba(128, 128, 128, 0.10);
+    border-left: 4px solid #B58A35;
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 0.8rem 0 1.2rem 0;
+    line-height: 1.6;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+
+# ============================================================
+# ESTRUCTURAS Y CRITERIOS
 # ============================================================
 
 ESTRUCTURAS = {
@@ -131,7 +186,7 @@ ESTRUCTURAS = {
 
 
 # ============================================================
-# NORMALIZACIÓN DE ASIGNACIONES
+# MAPEO DE ESTRUCTURAS
 # ============================================================
 
 MAPEO_ID = {
@@ -163,8 +218,6 @@ def normalizar_id(valor):
 
     valor = str(valor).strip()
 
-    # Evita que valores numéricos leídos como 123.0
-    # se comparen incorrectamente con 123.
     if valor.endswith(".0"):
         valor = valor[:-2]
 
@@ -172,6 +225,7 @@ def normalizar_id(valor):
 
 
 def resolver_estructura(estructura_id, estructura_nombre):
+
     id_limpio = str(estructura_id).strip().lower()
     nombre_limpio = str(estructura_nombre).strip().lower()
 
@@ -187,7 +241,7 @@ def resolver_estructura(estructura_id, estructura_nombre):
 
 
 # ============================================================
-# CARGA DE ASIGNACIONES
+# CARGAR ASIGNACIONES
 # ============================================================
 
 @st.cache_data
@@ -204,7 +258,6 @@ def cargar_asignaciones():
         encoding="utf-8-sig"
     ).fillna("")
 
-    # Limpiar encabezados y posibles espacios
     df.columns = [
         str(col).strip().replace("\ufeff", "")
         for col in df.columns
@@ -431,7 +484,7 @@ def guardar_resumen_drive(service, folder_id, registro):
 
 
 # ============================================================
-# INTERFAZ
+# INTERFAZ PRINCIPAL
 # ============================================================
 
 st.title("Evaluación Oral U4")
@@ -511,11 +564,11 @@ st.header(estructura["nombre"])
 
 
 # ============================================================
-# IMAGEN Y CHECKLIST EN COLUMNAS
+# IMAGEN Y LISTA DE COTEJO
 # ============================================================
 
 col_imagen, col_checklist = st.columns(
-    [1.15, 1],
+    [1, 1.2],
     gap="large"
 )
 
@@ -558,14 +611,63 @@ st.markdown("---")
 
 
 # ============================================================
+# INDICACIONES DE EXPRESIÓN ORAL
+# ============================================================
+
+st.header("Indicaciones para la grabación")
+
+st.markdown("""
+<div class="instrucciones-orales">
+
+<strong>Explica la estructura anatómica con tus propias palabras.</strong>
+
+Evita leer una respuesta redactada o memorizar un texto para reproducirlo.
+
+Puedes apoyarte en mapas conceptuales, escaletas, esquemas o palabras clave que te ayuden a organizar tu explicación.
+
+Se evaluará tu capacidad para explicar, relacionar y localizar las estructuras anatómicas utilizando terminología correcta, no la lectura de información preparada.
+
+La imagen anatómica permanecerá disponible como referencia durante la grabación.
+
+</div>
+""", unsafe_allow_html=True)
+
+
+# ============================================================
+# CRITERIO DE RÚBRICA
+# ============================================================
+
+with st.expander("Criterio de evaluación: explicación oral y dominio anatómico"):
+
+    st.markdown("""
+    **Nivel 4 — Sobresaliente**
+
+    Explica con sus propias palabras, con secuencia lógica, precisión anatómica y terminología adecuada. Utiliza apoyos únicamente como guía.
+
+    **Nivel 3 — Competente**
+
+    Explica de manera comprensible y mayormente correcta. Presenta algunas pausas o depende ocasionalmente de sus apoyos.
+
+    **Nivel 2 — En desarrollo**
+
+    La explicación es fragmentada, con dependencia frecuente de las notas o dificultades para establecer relaciones anatómicas.
+
+    **Nivel 1 — Insuficiente**
+
+    Lee una respuesta o no logra desarrollar una explicación anatómica coherente, incluso con apoyo.
+    """)
+
+
+# ============================================================
 # GRABACIÓN
 # ============================================================
+
+st.markdown("---")
 
 st.header("Preparación y grabación")
 
 st.write(
-    "Prepara tu respuesta utilizando terminología anatómica. "
-    "Cuando estés listo, graba tu explicación."
+    "Cuando estés listo, inicia la grabación de tu explicación oral."
 )
 
 audio = st.audio_input(
@@ -578,7 +680,7 @@ if audio is not None:
 
 
 # ============================================================
-# ENVÍO
+# ENVÍO A GOOGLE DRIVE
 # ============================================================
 
 if st.button(
