@@ -609,37 +609,29 @@ with col_checklist:
 
 st.markdown("---")
 
-
 # ============================================================
-# INDICACIONES DE EXPRESIÓN ORAL
-# ============================================================
-
-st.header("Indicaciones para la grabación")
-
-st.markdown("""
-<div class="instrucciones-orales">
-
-<strong>Explica la estructura anatómica con tus propias palabras.</strong>
-
-Evita leer una respuesta redactada o memorizar un texto para reproducirlo.
-
-Puedes apoyarte en mapas conceptuales, escaletas, esquemas o palabras clave que te ayuden a organizar tu explicación.
-
-Se evaluará tu capacidad para explicar, relacionar y localizar las estructuras anatómicas utilizando terminología correcta, no la lectura de información preparada.
-
-La imagen anatómica permanecerá disponible como referencia durante la grabación.
-
-</div>
-""", unsafe_allow_html=True)
-
-
-# ============================================================
-# CRITERIO DE RÚBRICA
+# INDICACIONES Y CRITERIO DE EVALUACIÓN
 # ============================================================
 
-with st.expander("Criterio de evaluación: explicación oral y dominio anatómico"):
+with st.expander("Consultar indicaciones para la grabación"):
 
     st.markdown("""
+    ### Indicaciones
+
+    Explica la estructura anatómica con tus propias palabras.
+
+    Evita leer una respuesta redactada o memorizar un texto para reproducirlo.
+
+    Puedes apoyarte en mapas conceptuales, escaletas, esquemas o palabras clave que te ayuden a organizar tu explicación.
+
+    Se evaluará tu capacidad para explicar, relacionar y localizar las estructuras anatómicas utilizando terminología correcta, no la lectura de información preparada.
+
+    La imagen anatómica permanecerá disponible como referencia durante la grabación.
+
+    ---
+
+    ### Criterio de evaluación: explicación oral y dominio anatómico
+
     **Nivel 4 — Sobresaliente**
 
     Explica con sus propias palabras, con secuencia lógica, precisión anatómica y terminología adecuada. Utiliza apoyos únicamente como guía.
@@ -664,11 +656,7 @@ with st.expander("Criterio de evaluación: explicación oral y dominio anatómic
 
 st.markdown("---")
 
-st.header("Preparación y grabación")
-
-st.write(
-    "Cuando estés listo, inicia la grabación de tu explicación oral."
-)
+st.header("Grabación")
 
 audio = st.audio_input(
     "Grabar respuesta oral",
@@ -718,10 +706,6 @@ if st.button(
             f"{id_alumno}_{estructura_id}_{marca_tiempo}.{extension}"
         )
 
-        # ----------------------------------------------------
-        # GUARDAR AUDIO
-        # ----------------------------------------------------
-
         archivo_audio = subir_archivo_drive(
             service,
             folder_id,
@@ -729,10 +713,6 @@ if st.button(
             audio_bytes,
             audio.type or "audio/wav"
         )
-
-        # ----------------------------------------------------
-        # CHECKLIST
-        # ----------------------------------------------------
 
         checklist_resultado = {
             f"criterio_{i}": (
@@ -743,10 +723,6 @@ if st.button(
                 start=1
             )
         }
-
-        # ----------------------------------------------------
-        # REGISTRO JSON
-        # ----------------------------------------------------
 
         registro_json = {
             "id": id_alumno,
@@ -774,10 +750,6 @@ if st.button(
             ).encode("utf-8"),
             "application/json"
         )
-
-        # ----------------------------------------------------
-        # REGISTRO CSV
-        # ----------------------------------------------------
 
         registro_csv = {
             "id": id_alumno,
