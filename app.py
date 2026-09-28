@@ -654,10 +654,6 @@ with st.expander("Consultar indicaciones para la grabación"):
 # GRABACIÓN
 # ============================================================
 
-st.markdown("---")
-
-st.header("Grabación")
-
 audio = st.audio_input(
     "Grabar respuesta oral",
     sample_rate=44100
@@ -665,7 +661,6 @@ audio = st.audio_input(
 
 if audio is not None:
     st.audio(audio)
-
 
 # ============================================================
 # ENVÍO A GOOGLE DRIVE
