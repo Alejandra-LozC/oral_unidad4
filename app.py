@@ -28,7 +28,7 @@ ARCHIVO_ASIGNACIONES = Path("data/asignaciones_unidad4.csv")
 
 
 # ============================================================
-# ESTRUCTURAS Y CRITERIOS
+# ESTRUCTURAS
 # ============================================================
 
 ESTRUCTURAS = {
@@ -47,6 +47,7 @@ ESTRUCTURAS = {
             "Explica su continuidad con la laringe y los bronquios principales."
         ]
     },
+
     "laringe": {
         "nombre": "Laringe",
         "imagen": "images/laringe.png",
@@ -62,8 +63,9 @@ ESTRUCTURAS = {
             "Explica su continuidad con la faringe y la tráquea."
         ]
     },
+
     "bronquios_carina": {
-        "nombre": "Bronquios principales y carina",
+        "nombre": "Bronquios principales y carina traqueal",
         "imagen": "images/bronquios.png",
         "consigna": (
             "Describe la bifurcación de la tráquea, la carina y las "
@@ -77,6 +79,7 @@ ESTRUCTURAS = {
             "Explica su continuidad con el árbol bronquial."
         ]
     },
+
     "faringe": {
         "nombre": "Faringe",
         "imagen": "images/faringe.png",
@@ -92,6 +95,7 @@ ESTRUCTURAS = {
             "Explica su continuidad con el esófago y la laringe."
         ]
     },
+
     "cavidad_nasal": {
         "nombre": "Cavidad nasal",
         "imagen": "images/cavidadnasal.png",
@@ -107,8 +111,9 @@ ESTRUCTURAS = {
             "Describe su comunicación con la nasofaringe y los senos paranasales."
         ]
     },
+
     "pulmones": {
-        "nombre": "Pulmones",
+        "nombre": "Pulmones derecho e izquierdo",
         "imagen": "images/pulmones.png",
         "consigna": (
             "Describe la localización, características externas y "
@@ -126,11 +131,125 @@ ESTRUCTURAS = {
 
 
 # ============================================================
+# NORMALIZACIÓN DE ASIGNACIONES
+# ============================================================
+
+MAPEO_ID = {
+    "1": "traquea",
+    "2": "laringe",
+    "3": "bronquios_carina",
+    "4": "faringe",
+    "5": "cavidad_nasal",
+    "6": "pulmones"
+}
+
+MAPEO_NOMBRE = {
+    "traquea": "traquea",
+    "tráquea": "traquea",
+    "laringe": "laringe",
+    "bronquios_carina": "bronquios_carina",
+    "bronquios principales y carina traqueal": "bronquios_carina",
+    "faringe": "faringe",
+    "cavidad_nasal": "cavidad_nasal",
+    "cavidad nasal": "cavidad_nasal",
+    "pulmones": "pulmones",
+    "pulmones derecho e izquierdo": "pulmones"
+}
+
+
+def normalizar_id(valor):
+    if pd.isna(valor):
+        return ""
+
+    valor = str(valor).strip()
+
+    # Evita que valores numéricos leídos como 123.0
+    # se comparen incorrectamente con 123.
+    if valor.endswith(".0"):
+        valor = valor[:-2]
+
+    return valor
+
+
+def resolver_estructura(estructura_id, estructura_nombre):
+    id_limpio = str(estructura_id).strip().lower()
+    nombre_limpio = str(estructura_nombre).strip().lower()
+
+    clave = MAPEO_ID.get(id_limpio)
+
+    if clave is None:
+        clave = MAPEO_NOMBRE.get(id_limpio)
+
+    if clave is None:
+        clave = MAPEO_NOMBRE.get(nombre_limpio)
+
+    return clave
+
+
+# ============================================================
+# CARGA DE ASIGNACIONES
+# ============================================================
+
+@st.cache_data
+def cargar_asignaciones():
+
+    if not ARCHIVO_ASIGNACIONES.exists():
+        raise FileNotFoundError(
+            "No se encontró data/asignaciones_unidad4.csv"
+        )
+
+    df = pd.read_csv(
+        ARCHIVO_ASIGNACIONES,
+        dtype=str,
+        encoding="utf-8-sig"
+    ).fillna("")
+
+    # Limpiar encabezados y posibles espacios
+    df.columns = [
+        str(col).strip().replace("\ufeff", "")
+        for col in df.columns
+    ]
+
+    columnas_requeridas = {
+        "id",
+        "estructura_id",
+        "estructura"
+    }
+
+    faltantes = columnas_requeridas - set(df.columns)
+
+    if faltantes:
+        raise ValueError(
+            f"Faltan columnas en el CSV: {', '.join(faltantes)}"
+        )
+
+    if "nombre_completo" not in df.columns:
+        df["nombre_completo"] = ""
+
+    df["id"] = df["id"].apply(normalizar_id)
+
+    df["estructura_id"] = (
+        df["estructura_id"].astype(str).str.strip()
+    )
+
+    df["estructura"] = (
+        df["estructura"].astype(str).str.strip()
+    )
+
+    df["nombre_completo"] = (
+        df["nombre_completo"].astype(str).str.strip()
+    )
+
+    return df
+
+
+# ============================================================
 # GOOGLE DRIVE
 # ============================================================
 
 @st.cache_resource
 def conectar_drive():
+
     config = st.secrets["gcp_oauth"]
 
     credenciales = Credentials(
@@ -154,6 +273,7 @@ def conectar_drive():
 
 
 def obtener_carpeta_drive(service):
+
     resultado = service.files().list(
         q=(
             f"name='{CARPETA_DRIVE}' "
@@ -184,6 +304,7 @@ def obtener_carpeta_drive(service):
 
 
 def buscar_archivo_drive(service, folder_id, filename):
+
     resultado = service.files().list(
         q=(
             f"name='{filename}' "
@@ -207,6 +328,7 @@ def subir_archivo_drive(
     contenido,
     mimetype
 ):
+
     metadata = {
         "name": filename,
         "parents": [folder_id]
@@ -233,6 +355,7 @@ def actualizar_archivo_drive(
     contenido,
     mimetype
 ):
+
     media = MediaIoBaseUpload(
         io.BytesIO(contenido),
         mimetype=mimetype,
@@ -247,7 +370,7 @@ def actualizar_archivo_drive(
 
 
 # ============================================================
-# GUARDAR CSV CONSOLIDADO
+# CSV CONSOLIDADO
 # ============================================================
 
 def guardar_resumen_drive(service, folder_id, registro):
@@ -258,7 +381,10 @@ def guardar_resumen_drive(service, folder_id, registro):
         CSV_RESUMEN
     )
 
+    df_nuevo = pd.DataFrame([registro])
+
     if archivo_existente:
+
         contenido_actual = service.files().get_media(
             fileId=archivo_existente["id"]
         ).execute()
@@ -266,12 +392,12 @@ def guardar_resumen_drive(service, folder_id, registro):
         try:
             df_existente = pd.read_csv(
                 io.BytesIO(contenido_actual),
-                dtype=str
+                dtype=str,
+                encoding="utf-8-sig"
             ).fillna("")
+
         except Exception:
             df_existente = pd.DataFrame()
-
-        df_nuevo = pd.DataFrame([registro])
 
         df_final = pd.concat(
             [df_existente, df_nuevo],
@@ -290,7 +416,6 @@ def guardar_resumen_drive(service, folder_id, registro):
         )
 
     else:
-        df_nuevo = pd.DataFrame([registro])
 
         contenido_csv = df_nuevo.to_csv(
             index=False
@@ -303,42 +428,6 @@ def guardar_resumen_drive(service, folder_id, registro):
             contenido_csv,
             "text/csv"
         )
-
-
-# ============================================================
-# CARGAR ASIGNACIONES
-# ============================================================
-
-@st.cache_data
-def cargar_asignaciones():
-    if not ARCHIVO_ASIGNACIONES.exists():
-        raise FileNotFoundError(
-            "No se encontró data/asignaciones_unidad4.csv"
-        )
-
-    df = pd.read_csv(
-        ARCHIVO_ASIGNACIONES,
-        dtype=str
-    ).fillna("")
-
-    columnas_requeridas = {
-        "id",
-        "nombre_completo",
-        "estructura_id",
-        "estructura"
-    }
-
-    faltantes = columnas_requeridas - set(df.columns)
-
-    if faltantes:
-        raise ValueError(
-            f"Faltan columnas en asignaciones_unidad4.csv: {faltantes}"
-        )
-
-    df["id"] = df["id"].str.strip().str.zfill(2)
-    df["estructura_id"] = df["estructura_id"].str.strip()
-
-    return df
 
 
 # ============================================================
@@ -355,6 +444,7 @@ st.write(
 
 try:
     asignaciones = cargar_asignaciones()
+
 except Exception as e:
     st.error("No fue posible cargar el archivo de asignaciones.")
     st.exception(e)
@@ -367,28 +457,49 @@ id_alumno = st.text_input(
     placeholder="Ingresa tu identificador"
 )
 
-id_alumno = id_alumno.strip().zfill(2) if id_alumno.strip() else ""
+id_alumno = normalizar_id(id_alumno)
 
 if not id_alumno:
     st.info("Ingresa tu identificador para continuar.")
     st.stop()
 
-alumno = asignaciones[
+
+alumno_encontrado = asignaciones[
     asignaciones["id"] == id_alumno
 ]
 
-if alumno.empty:
-    st.error("No se encontró el identificador. Verifica los datos.")
+if alumno_encontrado.empty:
+    st.error(
+        "No se encontró el identificador. "
+        "Verifica que esté escrito correctamente."
+    )
     st.stop()
 
-alumno = alumno.iloc[0]
 
-nombre = alumno["nombre_completo"]
-estructura_id = alumno["estructura_id"]
+alumno = alumno_encontrado.iloc[0]
 
-if estructura_id not in ESTRUCTURAS:
-    st.error("La estructura asignada no está configurada.")
+nombre = str(alumno["nombre_completo"]).strip()
+
+if not nombre:
+    nombre = f"Alumno {id_alumno}"
+
+estructura_id_original = alumno["estructura_id"]
+estructura_nombre_original = alumno["estructura"]
+
+estructura_id = resolver_estructura(
+    estructura_id_original,
+    estructura_nombre_original
+)
+
+if estructura_id is None or estructura_id not in ESTRUCTURAS:
+
+    st.error(
+        "No se reconoce la estructura asignada. "
+        f"ID: {estructura_id_original} | "
+        f"Estructura: {estructura_nombre_original}"
+    )
     st.stop()
+
 
 estructura = ESTRUCTURAS[estructura_id]
 
@@ -398,13 +509,20 @@ st.markdown("---")
 
 st.header(estructura["nombre"])
 
-# Imagen y checklist lado a lado
+
+# ============================================================
+# IMAGEN Y CHECKLIST EN COLUMNAS
+# ============================================================
+
 col_imagen, col_checklist = st.columns(
     [1.15, 1],
     gap="large"
 )
 
+respuestas = []
+
 with col_imagen:
+
     st.image(
         estructura["imagen"],
         use_container_width=True
@@ -414,20 +532,20 @@ with col_imagen:
 
     st.write(estructura["consigna"])
 
+
 with col_checklist:
+
     st.markdown("#### Lista de cotejo")
 
     st.caption(
-        "Utiliza estos criterios para verificar que tu explicación "
-        "incluya los elementos anatómicos solicitados."
+        "Verifica que tu explicación incluya los siguientes elementos."
     )
-
-    respuestas = []
 
     for i, criterio in enumerate(
         estructura["checklist"],
         start=1
     ):
+
         respuesta = st.checkbox(
             criterio,
             key=f"{id_alumno}_{estructura_id}_criterio_{i}"
@@ -435,7 +553,13 @@ with col_checklist:
 
         respuestas.append(respuesta)
 
+
 st.markdown("---")
+
+
+# ============================================================
+# GRABACIÓN
+# ============================================================
 
 st.header("Preparación y grabación")
 
@@ -452,16 +576,10 @@ audio = st.audio_input(
 if audio is not None:
     st.audio(audio)
 
-    st.caption(
-        f"Audio capturado: {audio.name or 'Grabación de audio'}"
-    )
 
-todos_completos = all(respuestas)
-
-if not todos_completos:
-    st.warning(
-        "Revisa los criterios de la lista de cotejo antes de enviar."
-    )
+# ============================================================
+# ENVÍO
+# ============================================================
 
 if st.button(
     "Enviar evaluación",
@@ -471,25 +589,36 @@ if st.button(
 ):
 
     try:
+
         service = conectar_drive()
         folder_id = obtener_carpeta_drive(service)
 
         fecha_hora = datetime.now().astimezone()
-        marca_tiempo = fecha_hora.strftime("%Y%m%d_%H%M%S")
+
+        marca_tiempo = fecha_hora.strftime(
+            "%Y%m%d_%H%M%S"
+        )
 
         audio_bytes = audio.getvalue()
 
         extension = "wav"
+
         if audio.type and "webm" in audio.type.lower():
             extension = "webm"
+
         elif audio.type and "ogg" in audio.type.lower():
             extension = "ogg"
+
         elif audio.type and "mp4" in audio.type.lower():
             extension = "mp4"
 
         audio_filename = (
             f"{id_alumno}_{estructura_id}_{marca_tiempo}.{extension}"
         )
+
+        # ----------------------------------------------------
+        # GUARDAR AUDIO
+        # ----------------------------------------------------
 
         archivo_audio = subir_archivo_drive(
             service,
@@ -499,12 +628,23 @@ if st.button(
             audio.type or "audio/wav"
         )
 
+        # ----------------------------------------------------
+        # CHECKLIST
+        # ----------------------------------------------------
+
         checklist_resultado = {
             f"criterio_{i}": (
                 "Cumplido" if respuesta else "No marcado"
             )
-            for i, respuesta in enumerate(respuestas, start=1)
+            for i, respuesta in enumerate(
+                respuestas,
+                start=1
+            )
         }
+
+        # ----------------------------------------------------
+        # REGISTRO JSON
+        # ----------------------------------------------------
 
         registro_json = {
             "id": id_alumno,
@@ -533,6 +673,10 @@ if st.button(
             "application/json"
         )
 
+        # ----------------------------------------------------
+        # REGISTRO CSV
+        # ----------------------------------------------------
+
         registro_csv = {
             "id": id_alumno,
             "nombre_completo": nombre,
@@ -557,14 +701,17 @@ if st.button(
         )
 
         st.success("Evaluación enviada correctamente.")
+
         st.info(
             "Se guardaron la grabación, el registro individual "
             "y el resumen consolidado en Google Drive."
         )
 
     except Exception as e:
+
         st.error(
             "No fue posible completar el envío. "
             "Verifica la conexión con Google Drive."
         )
+
         st.exception(e)
