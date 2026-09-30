@@ -5,3 +5,4 @@ pyarrow==24.0.0
 google-api-python-client==2.200.0
 google-auth==2.59.0
 google-auth-httplib2==0.4.2
+httptools==0.6.4
