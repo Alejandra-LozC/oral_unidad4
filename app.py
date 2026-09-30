@@ -300,7 +300,7 @@ def cargar_asignaciones():
 # GOOGLE DRIVE
 # ============================================================
 
-@st.cache_resource
+
 def conectar_drive():
 
     config = st.secrets["gcp_oauth"]
