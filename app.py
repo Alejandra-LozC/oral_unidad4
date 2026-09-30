@@ -578,7 +578,7 @@ with col_imagen:
 
     st.image(
         estructura["imagen"],
-        use_container_width=True
+        width="stretch"
     )
 
     st.markdown("#### Consigna")
@@ -645,7 +645,7 @@ if audio is not None:
 if st.button(
     "Enviar evaluación",
     type="primary",
-    use_container_width=True,
+    width="stretch",
     disabled=audio is None
 ):
 
